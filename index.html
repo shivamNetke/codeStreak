@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Code Streak Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="main">
+    <!-- Left Panel -->
+    <div class="left-panel">
+      <h1>🔥 Your Coding Streak: <span id="streak-count">0</span> Days</h1>
+
+      <!-- Calendar -->
+      <div id="calendar"></div>
+
+      <!-- Code Input -->
+      <textarea id="code-input" placeholder="Paste your code here..."></textarea>
+      <button onclick="submitCode()">Submit Today's Code</button>
+      <p id="message"></p>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="right-panel">
+      <h2>📅 Previous Days</h2>
+      <div id="history-list"></div>
+    </div>
+  </div>
+
+  <!-- Popup -->
+  <div id="popup" class="popup hidden">
+    <div class="popup-content">
+      <h3 id="popup-date"></h3>
+      <pre id="popup-code"></pre>
+      <button onclick="closePopup()">Close</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
