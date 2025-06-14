@@ -7,12 +7,11 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 const DATA_FILE = path.join(__dirname, 'details.txt');
 
-// Middlewares
 app.use(cors());
-app.use(express.json()); // REQUIRED to read req.body
-app.use(express.static('public')); // serve static files like HTML/CSS/JS
+app.use(express.json());
+app.use(express.static('public'));
 
-// Helper to load user data
+// Load users
 function loadUsers() {
   if (!fs.existsSync(DATA_FILE)) {
     fs.writeFileSync(DATA_FILE, '');
@@ -29,7 +28,7 @@ function loadUsers() {
     });
 }
 
-// Routes
+// Login route
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
@@ -47,7 +46,26 @@ app.post('/login', (req, res) => {
   }
 });
 
-// Root test route (optional)
+// ✅ Register route
+app.post('/register', (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ success: false, message: 'Missing credentials' });
+  }
+
+  const users = loadUsers();
+  const userExists = users.some(u => u.username === username);
+
+  if (userExists) {
+    return res.status(409).json({ success: false, message: 'Username already exists' });
+  }
+
+  fs.appendFileSync(DATA_FILE, `${username}|${password}\n`);
+  res.json({ success: true, message: 'Registration successful!' });
+});
+
+// Root
 app.get('/', (req, res) => {
   res.send('Server is running.');
 });
