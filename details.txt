@@ -1,2 +1,2 @@
-shivam:9881930329
-admin:YWRtaW4xMjM=
+shivam|9881930329
+admin|YWRtaW4xMjM=
