@@ -1,47 +1,63 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const fs = require("fs");
-const path = require("path");
-
+const express = require('express');
+const bodyParser = require('body-parser');
+const fs = require('fs');
+const cors = require('cors');
 const app = express();
-const PORT = process.env.PORT || 3000;
-const FILE = "details.txt";
+const port = process.env.PORT || 3000;
 
+// Middleware
+app.use(cors()); // allow cross-origin requests (from Netlify)
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "public")));
+app.use(bodyParser.json());
 
-app.post("/register", (req, res) => {
+// File to store user data
+const dataFile = 'details.txt';
+
+// Helper to ensure file exists
+if (!fs.existsSync(dataFile)) {
+  fs.writeFileSync(dataFile, '', 'utf-8');
+}
+
+// POST /register
+app.post('/register', (req, res) => {
   const { username, password } = req.body;
-  const token = Buffer.from(password).toString("base64");
 
-  if (fs.existsSync(FILE)) {
-    const data = fs.readFileSync(FILE, "utf-8");
-    const userExists = data.split("\n").some(line => line.startsWith(username + ":"));
-    if (userExists) return res.send("Username already exists.");
+  const data = fs.readFileSync(dataFile, 'utf-8');
+  const exists = data.split('\n').find(line => {
+    const [storedUser] = line.split('|');
+    return storedUser === username;
+  });
+
+  if (exists) {
+    return res.status(409).send('⚠️ User already exists');
   }
 
-  fs.appendFileSync(FILE, `${username}:${token}\n`);
-  res.send("Registered successfully.");
+  fs.appendFileSync(dataFile, `${username}|${password}\n`);
+  res.send('✅ Registration successful');
 });
 
-app.post("/login", (req, res) => {
+// POST /login
+app.post('/login', (req, res) => {
   const { username, password } = req.body;
-  const token = Buffer.from(password).toString("base64");
 
-  if (fs.existsSync(FILE)) {
-    const data = fs.readFileSync(FILE, "utf-8");
-    const users = data.split("\n");
-    for (let line of users) {
-      const [storedUser, storedToken] = line.trim().split(":");
-      if (storedUser === username && storedToken === token) {
-        return res.send("Login successful!");
-      }
-    }
+  const data = fs.readFileSync(dataFile, 'utf-8');
+  const found = data.split('\n').find(line => {
+    const [storedUser, storedPass] = line.split('|');
+    return storedUser === username && storedPass === password;
+  });
+
+  if (found) {
+    res.send('✅ Login successful');
+  } else {
+    res.status(401).send('❌ Invalid username or password');
   }
-
-  res.send("Invalid username or password.");
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+// Default route
+app.get('/', (req, res) => {
+  res.send('🟢 Backend is running: CodeStreak API');
+});
+
+app.listen(port, () => {
+  console.log(`✅ Server is running on http://localhost:${port}`);
 });
