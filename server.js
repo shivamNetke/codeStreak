@@ -9,10 +9,10 @@ const DATA_FILE = path.join(__dirname, 'details.txt');
 
 // Middleware
 app.use(cors());
-app.use(express.json()); // To parse JSON request body
-app.use(express.static('public')); // Serve static files from "public" folder
+app.use(express.json());
+app.use(express.static('public'));
 
-// Helper function to load users
+// Load users from details.txt
 function loadUsers() {
   if (!fs.existsSync(DATA_FILE)) {
     fs.writeFileSync(DATA_FILE, '');
@@ -29,7 +29,30 @@ function loadUsers() {
     });
 }
 
-// Login route
+// Save a new user
+function saveUser(username, password) {
+  fs.appendFileSync(DATA_FILE, `${username}|${password}\n`);
+}
+
+// Routes
+app.post('/register', (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ success: false, message: 'Missing credentials' });
+  }
+
+  const users = loadUsers();
+  const exists = users.find(u => u.username === username);
+
+  if (exists) {
+    return res.status(409).json({ success: false, message: 'Username already exists' });
+  }
+
+  saveUser(username, password);
+  res.json({ success: true, message: 'User registered successfully' });
+});
+
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
@@ -47,36 +70,18 @@ app.post('/login', (req, res) => {
   }
 });
 
-// Register route
-app.post('/register', (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).json({ success: false, message: 'Missing credentials' });
-  }
-
-  const users = loadUsers();
-  const userExists = users.some(u => u.username === username);
-
-  if (userExists) {
-    return res.status(409).json({ success: false, message: 'Username already exists' });
-  }
-
-  // Append user to details.txt
-  try {
-    fs.appendFileSync(DATA_FILE, `${username}|${password}\n`);
-    res.json({ success: true, message: 'Registration successful!' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to save user' });
-  }
+app.get('/download', (req, res) => {
+  res.download(DATA_FILE, 'details.txt', (err) => {
+    if (err) {
+      res.status(500).send('Error downloading file');
+    }
+  });
 });
 
-// Root route (optional)
 app.get('/', (req, res) => {
   res.send('Server is running.');
 });
 
-// Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
