@@ -7,11 +7,12 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 const DATA_FILE = path.join(__dirname, 'details.txt');
 
+// Middleware
 app.use(cors());
-app.use(express.json());
-app.use(express.static('public'));
+app.use(express.json()); // To parse JSON request body
+app.use(express.static('public')); // Serve static files from "public" folder
 
-// Load users
+// Helper function to load users
 function loadUsers() {
   if (!fs.existsSync(DATA_FILE)) {
     fs.writeFileSync(DATA_FILE, '');
@@ -46,7 +47,7 @@ app.post('/login', (req, res) => {
   }
 });
 
-// ✅ Register route
+// Register route
 app.post('/register', (req, res) => {
   const { username, password } = req.body;
 
@@ -61,15 +62,21 @@ app.post('/register', (req, res) => {
     return res.status(409).json({ success: false, message: 'Username already exists' });
   }
 
-  fs.appendFileSync(DATA_FILE, `${username}|${password}\n`);
-  res.json({ success: true, message: 'Registration successful!' });
+  // Append user to details.txt
+  try {
+    fs.appendFileSync(DATA_FILE, `${username}|${password}\n`);
+    res.json({ success: true, message: 'Registration successful!' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to save user' });
+  }
 });
 
-// Root
+// Root route (optional)
 app.get('/', (req, res) => {
   res.send('Server is running.');
 });
 
+// Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
