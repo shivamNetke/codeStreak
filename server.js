@@ -40,6 +40,36 @@ app.post('/login', (req, res) => {
   }
 });
 
+// Route: Register user
+app.post('/register', (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ success: false, message: 'Missing credentials' });
+  }
+
+  if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, '');
+
+  const data = fs.readFileSync(DATA_FILE, 'utf-8');
+  const lines = data.split('\n');
+
+  // Check if username already exists
+  const userExists = lines.some(line => {
+    const [storedUser] = line.split('|');
+    return storedUser === username;
+  });
+
+  if (userExists) {
+    return res.status(409).json({ success: false, message: 'Username already exists' });
+  }
+
+  const entry = `${username}|${password}|\n`; // only for login line
+  fs.appendFileSync(DATA_FILE, entry);
+
+  return res.json({ success: true, message: 'User registered successfully' });
+});
+
+
 // Utility: Load all data grouped by username and date
 function loadAllUserData() {
   if (!fs.existsSync(DATA_FILE)) return {};
