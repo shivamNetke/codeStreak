@@ -11,6 +11,35 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// Login Route
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ success: false, message: 'Missing credentials' });
+  }
+
+  // Load details.txt and look for matching user
+  if (!fs.existsSync(DATA_FILE)) {
+    return res.status(401).json({ success: false, message: 'No user data found' });
+  }
+
+  const data = fs.readFileSync(DATA_FILE, 'utf-8');
+  const lines = data.split('\n');
+
+  // We're assuming credentials are saved as `username|password|...` in some lines
+  const userExists = lines.some(line => {
+    const [storedUser, storedPass] = line.split('|');
+    return storedUser === username && storedPass === password;
+  });
+
+  if (userExists) {
+    return res.json({ success: true, message: 'Login successful!' });
+  } else {
+    return res.status(401).json({ success: false, message: 'Invalid username or password' });
+  }
+});
+
 // Utility: Load all data grouped by username and date
 function loadAllUserData() {
   if (!fs.existsSync(DATA_FILE)) return {};
